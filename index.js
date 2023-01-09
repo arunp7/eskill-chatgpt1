@@ -73,10 +73,20 @@ function startMicroservice() {
      * Respond to user messages asking us to code/decode things
      */
     svc.on('msg', (req, cb) => {
-        if(req.msg && !req.msg.startsWith('/')) {
+        if(!OPENAI_API_KEY){
+            sendReply("Please add ChatGPT API key on config file.",req)
+            throw new Error('No API Key added in config file.')
+        } 
+        
+        else if(req.msg && !req.msg.startsWith('/')) {
             cb(null, true) /* Yes I am handling this message */
-            reqChatGPTServer(req.msg.substring(''.length),cgptAnswer=>{
-                if(cgptAnswer) sendReply(cgptAnswer,req)
+            reqChatGPTServer(req.msg.substring(''.length),(err,cgptAnswer)=>{
+                if (!err) {
+                    sendReply(cgptAnswer, req);
+                }else {
+                    sendReply("Something went wrong. Please try again later.", req);
+                    u.showErr(err);
+                }
             })
        
         } else {
@@ -85,7 +95,6 @@ function startMicroservice() {
     })
 
     async function reqChatGPTServer(msg,cb) {
-        if(!OPENAI_API_KEY) cb("Please add ChatGPT API key on config file.")
         
         const instance = axios.create({
             httpsAgent: new https.Agent({  
@@ -107,17 +116,23 @@ function startMicroservice() {
             headers : headers
         })
         .then(function(response){
-            if(response) {
+            if(response.data.error){
+                u.showErr(response.data.error);
+                cb(response.data.error);
+            }else if(response.data.choices && response.data.choices.length > 0){
                 const result = response.data.choices;
                 const idToSearchFor = 0;
                 const chatGPTAnswer = result.find(
-                obj => obj.index === idToSearchFor
-                )
-                cb(chatGPTAnswer.text.trim())
+                  (obj) => obj.index === idToSearchFor
+                );
+                cb(null, chatGPTAnswer.text.trim());
+            }else {
+                cb(null, "No response from OpenAI API. Seems high traffic");
             }
         })
         .catch(function (error) {
             u.showErr(error)
+            cb(error)
         })
     }
 }
