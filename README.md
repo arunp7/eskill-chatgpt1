@@ -1,8 +1,8 @@
 # The ChatGPT Skill
 
-This skill allows you to add [ChatGPT](https://chat.openai.com/) as a brain to your existing Everlife Explorer.
-
 ![logo](./elife-chatgpt.png)
+
+This skill allows you to add [ChatGPT](https://chat.openai.com/) as a brain to your existing Everlife Explorer.
 
 You can see it in action in [the demo video](./Demo Video.mp4).
 
