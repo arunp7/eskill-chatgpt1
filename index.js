@@ -73,14 +73,22 @@ function startMicroservice() {
      * Respond to user messages asking us to code/decode things
      */
     svc.on('msg', (req, cb) => {
+        
+        // We use other everlife brains if chatgpt api key is not added in config file 
         if(!OPENAI_API_KEY){
             u.showErr("Please add your ChatGPT API key in the config file.")
             return cb()
-        } 
+        }
         
-        if(req.msg && !req.msg.startsWith('/') || req.msg && !req.msg.startsWith('/chatgpt')) {
+        let cgptCmdCheck = req.msg.startsWith('/chatgpt')
+        
+        if(req.msg && (!req.msg.startsWith('/') || cgptCmdCheck)) {
+            
             cb(null, true) /* Yes I am handling this message */
-            if(req.msg.startsWith('/chatgpt ')) req.msg = req.msg.substring('/chatgpt '.length)
+            
+            // Handling case where user might use /chatgpt command
+            if(cgptCmdCheck) req.msg = req.msg.substring('/chatgpt'.length)
+            
             reqChatGPTServer(req.msg,(err,cgptAnswer)=>{
                 if(err){
                     sendReply("Oops, it looks like something went wrong. Could you please try again.", req)
@@ -117,9 +125,9 @@ function startMicroservice() {
         .then(function(response){
             if(response && response.data){
                 if(response.data.choices && response.data.choices.length > 0){
-                const result = response.data.choices;
-                const chatGPTAnswer = result[0].text
-                cb(null, chatGPTAnswer.trim());
+                    const result = response.data.choices;
+                    const chatGPTAnswer = result[0].text
+                    cb(null, chatGPTAnswer.trim());
                 }
                 else if (response.data.error)  cb(response.data.error)
                 else cb("Unexpected response: Did not find 'choices' or 'error' in response")  
