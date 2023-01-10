@@ -114,13 +114,16 @@ function startMicroservice() {
             headers : headers
         })
         .then(function(response){
-            if(response && response.data.choices && response.data.choices.length > 0){
+            if(response && response.data){
+                if(response.choices && response.data.choices.length > 0){
                 const result = response.data.choices;
                 const chatGPTAnswer = result[0].text
                 cb(null, chatGPTAnswer.trim());
-            }
-            else if(response.data.error)  cb(response.data.error)   
-            else cb("Unexpected response: Did not find 'choices' or 'error' in response")
+                }
+                else if (response.data.error)  cb(response.data.error)
+                else cb("Unexpected response: Did not find 'choices' or 'error' in response")  
+            }else cb("No response from ChatGPT Server. Please try again")
+             
         })
         .catch(function (error) {
             cb(error)
