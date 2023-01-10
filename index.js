@@ -78,8 +78,9 @@ function startMicroservice() {
             return cb()
         } 
         
-        if(req.msg && !req.msg.startsWith('/')) {
+        if(req.msg && !req.msg.startsWith('/') || req.msg && !req.msg.startsWith('/chatgpt')) {
             cb(null, true) /* Yes I am handling this message */
+            if(req.msg.startsWith('/chatgpt ')) req.msg = req.msg.substring('/chatgpt '.length)
             reqChatGPTServer(req.msg,(err,cgptAnswer)=>{
                 if(err){
                     sendReply("Oops, it looks like something went wrong. Could you please try again.", req)
@@ -115,7 +116,7 @@ function startMicroservice() {
         })
         .then(function(response){
             if(response && response.data){
-                if(response.choices && response.data.choices.length > 0){
+                if(response.data.choices && response.data.choices.length > 0){
                 const result = response.data.choices;
                 const chatGPTAnswer = result[0].text
                 cb(null, chatGPTAnswer.trim());
