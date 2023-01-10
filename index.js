@@ -74,8 +74,8 @@ function startMicroservice() {
      */
     svc.on('msg', (req, cb) => {
         if(!OPENAI_API_KEY){
-            sendReply("Please add ChatGPT API key on config file.",req)
-            throw new Error('No API Key added in config file.')
+            u.showErr("Please add your ChatGPT API key in the config file.")
+            return cb()
         } 
         
         if(req.msg && !req.msg.startsWith('/')) {
@@ -83,7 +83,8 @@ function startMicroservice() {
             reqChatGPTServer(req.msg,(err,cgptAnswer)=>{
                 if(err){
                     sendReply("Oops, it looks like something went wrong. Could you please try again.", req)
-                    u.showErr(err.message)
+                    if(err.message) u.showErr(err.message)
+                    else u.showErr(err)
                 }
                 else sendReply(cgptAnswer,req);
             })
@@ -113,15 +114,13 @@ function startMicroservice() {
             headers : headers
         })
         .then(function(response){
-            if(response.data.choices && response.data.choices.length > 0){
+            if(response && response.data.choices && response.data.choices.length > 0){
                 const result = response.data.choices;
                 const chatGPTAnswer = result[0].text
                 cb(null, chatGPTAnswer.trim());
             }
-            else if(response.data.error){
-                u.showErr(response.data.error)
-                cb(response.data.error)
-            }else cb()
+            else if(response.data.error)  cb(response.data.error)   
+            else cb("Unexpected response: Did not find 'choices' or 'error' in response")
         })
         .catch(function (error) {
             cb(error)
