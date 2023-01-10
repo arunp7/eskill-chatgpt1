@@ -38,7 +38,7 @@ function registerWithCommMgr() {
         type: 'register-msg-handler',
         mskey: msKey,
         mstype: 'msg',
-        mshelp: [ { cmd: '/chatgpt', txt: "Get replies from OpenAIs's chatgpt server" } ],
+        mshelp: [ { cmd: "/chatgpt", txt: `To receive replies from the OpenAI ChatGPT server without using any commands. Install this skill using '/install chatgpt' command`}],
     }, (err) => {
         if(err) u.showErr(err)
     })
@@ -78,20 +78,17 @@ function startMicroservice() {
             throw new Error('No API Key added in config file.')
         } 
         
-        else if(req.msg && !req.msg.startsWith('/')) {
+        if(req.msg && !req.msg.startsWith('/')) {
             cb(null, true) /* Yes I am handling this message */
-            reqChatGPTServer(req.msg.substring(''.length),(err,cgptAnswer)=>{
-                if (!err) {
-                    sendReply(cgptAnswer, req);
-                }else {
-                    sendReply("Something went wrong. Please try again later.", req);
-                    u.showErr(err);
+            reqChatGPTServer(req.msg,(err,cgptAnswer)=>{
+                if(err){
+                    sendReply("Oops, it looks like something went wrong. Could you please try again.", req)
+                    u.showErr(err.message)
                 }
+                else sendReply(cgptAnswer,req);
             })
        
-        } else {
-            cb() /* REMEMBER TO CALL THIS OTHERWISE THE AVATAR WILL WAIT FOR A RESPONSE FOREVER */
-        }
+        } else cb() /* REMEMBER TO CALL THIS OTHERWISE THE AVATAR WILL WAIT FOR A RESPONSE FOREVER */ 
     })
 
     async function reqChatGPTServer(msg,cb) {
@@ -116,22 +113,17 @@ function startMicroservice() {
             headers : headers
         })
         .then(function(response){
-            if(response.data.error){
-                u.showErr(response.data.error);
-                cb(response.data.error);
-            }else if(response.data.choices && response.data.choices.length > 0){
+            if(response.data.choices && response.data.choices.length > 0){
                 const result = response.data.choices;
-                const idToSearchFor = 0;
-                const chatGPTAnswer = result.find(
-                  (obj) => obj.index === idToSearchFor
-                );
-                cb(null, chatGPTAnswer.text.trim());
-            }else {
-                cb(null, "No response from OpenAI API. Seems high traffic");
+                const chatGPTAnswer = result[0].text
+                cb(null, chatGPTAnswer.trim());
             }
+            else if(response.data.error){
+                u.showErr(response.data.error)
+                cb(response.data.error)
+            }else cb()
         })
         .catch(function (error) {
-            u.showErr(error)
             cb(error)
         })
     }
