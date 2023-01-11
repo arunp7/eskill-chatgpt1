@@ -80,7 +80,7 @@ function startMicroservice() {
             return cb()
         }
         
-        let cgptCmdCheck = req.msg.startsWith('/chatgpt')
+        const cgptCmdCheck = req.msg && req.msg.startsWith('/chatgpt')
         
         if(req.msg && (!req.msg.startsWith('/') || cgptCmdCheck)) {
             
