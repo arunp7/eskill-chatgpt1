@@ -119,25 +119,24 @@ function startMicroservice() {
             presence_penalty: 0.0,  //Number between -2.0 and 2.0. Positive values increase the model's likelihood to talk about new topics.
             stop: ["#", ";"] //Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
         }
-        instance.post('https://api.openai.com/v1/completions', body, {
-            headers : headers
-        })
-        .then(function(response){
-            if(response && response.data){
-                if(response.data.choices && response.data.choices.length > 0){
-                    const result = response.data.choices;
-                    const chatGPTAnswer = result[0].text
-                    cb(null, chatGPTAnswer.trim());
-                }
-                else if (response.data.error)  cb(response.data.error)
-                else cb("Unexpected response: Did not find 'choices' or 'error' in response")  
-            }else cb("No response from ChatGPT Server. Please try again")
-             
-        })
-        .catch(function (error) {
-            cb(error)
-        })
+        try{
+          const response = await instance.post('https://api.openai.com/v1/completions', body, {headers : headers})
+          if(response && response.data){
+            if(response.data.choices && response.data.choices.length > 0){
+                const result = response.data.choices;
+                const chatGPTAnswer = result[0].text
+                cb(null, chatGPTAnswer.trim());
+            }
+            else if (response.data.error)  cb(response.data.error)
+            else cb("Unexpected response: Did not find 'choices' or 'error' in response")  
+          }
+          else cb("No response from ChatGPT Server. Please try again")
+        }catch(error) {
+          cb(error)
+      }
+       
     }
-}
+  }
+    
 
 main()
